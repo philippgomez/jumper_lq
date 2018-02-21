@@ -29,3 +29,30 @@ JumperLQ.config(function($routeProvider) {
 JumperLQ.config(function($httpProvider) {
   $httpProvider.interceptors.push('myHttpInterceptor');
 });
+
+
+function checkLoginState() {
+  FB.getLoginStatus(function(response) {
+    statusChangeCallback(response);
+  });
+}
+
+function statusChangeCallback(response) {
+  var access_token = FB.getAuthResponse()['access_token']
+  FB.api('/me', function(response) {
+     $.ajax({
+      type: 'POST',
+      url: '/fbconnect?state=connect',
+      processData: false,
+      data: access_token,
+      contentType: 'application/octet-stream; charset=utf-8',
+      success: function(result) {
+        if (result) {
+         setTimeout(function() {
+         window.location.href = "/group";
+         }, 4000);
+      } else {
+         }
+  }
+}
+

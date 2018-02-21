@@ -23,3 +23,4 @@ function checkLoginState() {
     statusChangeCallback(response);
   });
 }
+
