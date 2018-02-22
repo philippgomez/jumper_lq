@@ -7,17 +7,21 @@ class User(ndb.Model):
     email = ndb.StringProperty()
     groups = ndb.KeyProperty(repeated=True)
 
+def AddUser(user_id, first_name, cover, email):
+    user = User(id=user_id, first_name=first_name, cover=cover, email=email)
+    user.put()
+    return user
+
+def GetUser(user_id):
+    user = User.query(User.id == user_id).get()
+    return user
+
+
 class Group(ndb.Model):
     id = ndb.IntegerProperty()
     name = ndb.StringProperty()
     icon = ndb.StringProperty()
     is_sending_notify = ndb.BooleanProperty()
-
-
-def AddUser(user_id, first_name, cover, email):
-    user = User(id=user_id, first_name=first_name, cover=cover, email=email)
-    user.put()
-    return user
 
 def AddGroup(group_id, user_id, name, icon, is_sending_notify=true):
 
