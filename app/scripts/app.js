@@ -30,5 +30,3 @@ JumperLQ.config(function($httpProvider) {
   $httpProvider.interceptors.push('myHttpInterceptor');
 });
 
-}
-
