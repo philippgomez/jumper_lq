@@ -16,10 +16,14 @@ JumperLQ.factory('myHttpInterceptor', function($rootScope, $q) {
   };
 });
 
-JumperLQ.config(function($routeProvider) {
-  $routeProvider.when('/', {
+JumperLQ.config(function($routeProvider, $locationProvider) {
+  $routeProvider.when('/login', {
     controller : 'LoginController',
     templateUrl: '/partials/login.html',
+  });
+  $routeProvider.when('/', {
+    controller : 'MainController',
+    templateUrl: '/partials/main.html',
   });
   $routeProvider.otherwise({
     redirectTo : '/'

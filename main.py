@@ -8,7 +8,7 @@ def UserAsDict(user):
     return {'user_id': user.key.id(), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : user.groups}
 
 def GroupAsDict(group):
-    return {'group_id': group.key.id(), 'name' : group.name, 'icon' : group.icon, 'is_sending_notify' : group.is_sending_notify}
+    return {'group_id': group.key.id(), 'name' : group.name, 'icon' : group.icon, 'is_notify_sent' : group.is_notify_sent}
 
 
 class RestHandler(webapp2.RequestHandler):
@@ -58,17 +58,17 @@ class FBConnectHandler(RestHandler) :
         app_secret = json.loads(open('fb_client_secrets.json', 'r').read())['web']['app_secret']
 
         # get token
-        conn = httplib.HTTPConnection("https://graph.facebook.com")
+        conn = httplib.HTTPSConnection("graph.facebook.com")
         url = '/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
           app_id, app_secret, access_token)
         conn.request("GET", url)
-        result = conn.getresponse()
+        result = conn.getresponse().read()
         token = result.split(',')[0].split(':')[1].replace('"', '')
 
         # get user information
         url = '/v2.8/me?access_token=%s&fields=name,id,email,cover' % token
         conn.request("GET", url)
-        result = conn.getresponse()
+        result = conn.getresponse().read()
         data = json.loads(result)
         user_id = data['id']
         name = data['name']
@@ -77,13 +77,13 @@ class FBConnectHandler(RestHandler) :
         # get user cover photo url
         url = '/v2.8/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
         conn.request("GET", url)
-        result = conn.getresponse()
+        result = conn.getresponse().read()
         data = json.loads(result)
         cover = data['data']['url']
         
-        user = User.GetUser(user_id)
+        user = model.GetUser(user_id)
         if not user:
-            User.AddUser(user_id, name, cover, email)
+            user = model.AddUser(user_id, name, cover, email)
 
         r = UserAsDict(user)
         self.SendJson(r)

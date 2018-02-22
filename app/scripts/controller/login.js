@@ -1,10 +1,9 @@
-JumperLQ.controller('LoginController', [$window, function($scope, $rootScope, $log, $http, $routeParams, $location, $route, $window) {
+JumperLQ.controller('LoginController', function($scope, $rootScope, $log, $http, $routeParams, $location, $route) {
 
   $scope.statusChangeCallback = function(response) {
     $rootScope.status = "Processing response ..."
-    var token = FB.getAuthResponse()['access_token']
+    var token = FB.getAuthResponse()['accessToken']
 
-    if response.status == 'connected' {
       FB.api('/me', function(response) {
         var postData = { access_token : token }
         var config = { }
@@ -13,11 +12,10 @@ JumperLQ.controller('LoginController', [$window, function($scope, $rootScope, $l
         ).success(function(data, status, headers, config) {
           $scope.user = data
           $rootScope.status = ""
-          $location = "/showgroups"
+          $location.path("/")
         }).error(function(data, status, headers, config) {
         });
       });
-    }
   };
 
   window.checkLoginState = function() {

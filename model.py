@@ -1,7 +1,7 @@
 from google.appengine.ext import ndb
 
 class User(ndb.Model):
-    id = ndb.IntegerProperty()
+    id = ndb.StringProperty()
     first_name = ndb.StringProperty()
     cover = ndb.StringProperty()
     email = ndb.StringProperty()
@@ -18,14 +18,14 @@ def GetUser(user_id):
 
 
 class Group(ndb.Model):
-    id = ndb.IntegerProperty()
+    id = ndb.StringProperty()
     name = ndb.StringProperty()
     icon = ndb.StringProperty()
-    is_sending_notify = ndb.BooleanProperty()
+    is_notify_sent = ndb.BooleanProperty()
 
-def AddGroup(group_id, user_id, name, icon, is_sending_notify=True):
+def AddGroup(group_id, user_id, name, icon, is_notify_sent=True):
 
-    group = Group(id=group_id, user_id=user_id, name=name, icon=icon, is_sending_notify=is_sending_notify)
+    group = Group(id=group_id, user_id=user_id, name=name, icon=icon, is_notify_sent=is_notify_sent)
     group.put()
 
     user = User.query(User.id == user_id).get()
