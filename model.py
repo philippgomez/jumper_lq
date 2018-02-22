@@ -6,9 +6,10 @@ class User(ndb.Model):
     cover = ndb.StringProperty()
     email = ndb.StringProperty()
     groups = ndb.KeyProperty(repeated=True)
+    token = ndb.StringProperty()
 
-def AddUser(user_id, first_name, cover, email):
-    user = User(id=user_id, first_name=first_name, cover=cover, email=email)
+def AddUser(user_id, first_name, cover, email, token):
+    user = User(id=user_id, first_name=first_name, cover=cover, email=email, token=token)
     user.put()
     return user
 

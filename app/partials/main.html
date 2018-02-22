@@ -1,11 +1,11 @@
 <div ng-controller="MainController">
-  Hello, {{user.first_name}} !
+  Hello, {{login_user.first_name}} !
   <table>
     <tr>
       <td><strong>Group</td>
       <td><strong>Send notifications</td>
     </tr>
-    <tr ng-repeat='group in user.groups'>
+    <tr ng-repeat='group in login_user.groups'>
       <td>{{group.name}}</td>
       <td>
           <label class="switch">

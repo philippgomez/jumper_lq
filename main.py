@@ -23,29 +23,36 @@ class RestHandler(webapp2.RequestHandler):
 
 class UserHandler(RestHandler):
 
-    def get(self):
-        users = model.AllUsers()
-        r = [UserAsDict(user) for user in users]
-        self.SendJson(r)
-
     def post(self):
         r = json.loads(self.request.body)
-        user = model.AddUser(r['user_id'], r['first_name'], r['cover'], r['email'])
-        r = UserAsDict(user)
+        user_id = r['user_id']
+        if not user_id :
+            r = { }
+        else :
+            user = model.GetUser(user_id)
+            r = [UserAsDict(user)]
+
         self.SendJson(r)
 
 
 class GroupHandler(RestHandler):
 
-    def get(self):
-        groups = model.GetGroups()
-        r = [UserAsDict(group) for group in groups]
-        self.SendJson(r)
-
     def post(self):
         r = json.loads(self.request.body)
-        group = model.AddGroup(r['group_id'], r['user_id'], r['name'], r['icon'])
-        r = GroupAsDict(group)
+        user_id = r['user_id']
+        token = r['token']
+        
+        conn = httplib.HTTPSConnection("graph.facebook.com")
+        url = '/v2.12/%s/groups?access_token=%s&fields=data{id, icon, name},paging' % (user_id, token)
+        conn.request("GET", url)
+        result = conn.getresponse().read()
+        data = json.loads(result)
+        for (group in data.data) :
+           model.AddGroup(group['id'], user_id, group['name'], group['icon'])
+
+        groups = model.GetGroups(user_id)
+        r = [UserAsDict(group) for group in groups]
+
         self.SendJson(r)
 
 
@@ -66,16 +73,16 @@ class FBConnectHandler(RestHandler) :
         token = result.split(',')[0].split(':')[1].replace('"', '')
 
         # get user information
-        url = '/v2.8/me?access_token=%s&fields=name,id,email,cover' % token
+        url = '/v2.12/me?access_token=%s&fields=first_name,id,email,cover' % token
         conn.request("GET", url)
         result = conn.getresponse().read()
         data = json.loads(result)
         user_id = data['id']
-        name = data['name']
+        name = data['first_name']
         email = data['email']
 
         # get user cover photo url
-        url = '/v2.8/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
+        url = '/v2.12/me/picture?access_token=%s&redirect=0&height=200&width=200' % token
         conn.request("GET", url)
         result = conn.getresponse().read()
         data = json.loads(result)
@@ -83,7 +90,7 @@ class FBConnectHandler(RestHandler) :
         
         user = model.GetUser(user_id)
         if not user:
-            user = model.AddUser(user_id, name, cover, email)
+            user = model.AddUser(user_id, name, cover, email, token)
 
         r = UserAsDict(user)
         self.SendJson(r)
