@@ -23,7 +23,7 @@ class Group(ndb.Model):
     icon = ndb.StringProperty()
     is_sending_notify = ndb.BooleanProperty()
 
-def AddGroup(group_id, user_id, name, icon, is_sending_notify=true):
+def AddGroup(group_id, user_id, name, icon, is_sending_notify=True):
 
     group = Group(id=group_id, user_id=user_id, name=name, icon=icon, is_sending_notify=is_sending_notify)
     group.put()
