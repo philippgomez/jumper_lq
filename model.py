@@ -32,13 +32,13 @@ def UpdateUser(user_id, first_name, cover, email, token):
 
 class Group(ndb.Model):
     id = ndb.StringProperty()
+    user_id = ndb.StringProperty()
     name = ndb.StringProperty()
-    icon = ndb.StringProperty()
     is_notify_sent = ndb.BooleanProperty()
 
-def AddGroup(group_id, user_id, name, icon, is_notify_sent=True):
+def AddGroup(group_id, user_id, name, is_notify_sent=True):
 
-    group = Group(id=group_id, user_id=user_id, name=name, icon=icon, is_notify_sent=is_notify_sent)
+    group = Group(id=group_id, user_id=user_id, name=name, is_notify_sent=is_notify_sent)
     group.put()
 
     user = User.query(User.id == user_id).get()

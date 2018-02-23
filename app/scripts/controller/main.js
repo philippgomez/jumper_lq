@@ -33,12 +33,12 @@ JumperLQ.controller('MainController', function($scope, $rootScope, $log, $http, 
 	{name: "Group3", cover: "", is_notify_sent: true}
 	]
 
-    //$http.post('/rest/group', postData, config
-    //    ).success(function(data, status, headers, config) {
-    //      $scope.login_user.groups = data
-    //    }).error(function(data, status, headers, config) {
-    //      $scope.login_user.groups = []
-    //    });
+    $http.post('/rest/group', postData, config
+        ).success(function(data, status, headers, config) {
+          $scope.login_user.groups = data
+        }).error(function(data, status, headers, config) {
+          $scope.login_user.groups = []
+        });
   };
 
   $scope.getUserInfo();
