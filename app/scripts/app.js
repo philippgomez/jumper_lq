@@ -17,11 +17,11 @@ JumperLQ.factory('myHttpInterceptor', function($rootScope, $q) {
 });
 
 JumperLQ.config(function($routeProvider, $locationProvider) {
-  $routeProvider.when('/login', {
+  $routeProvider.when('/', {
     controller : 'LoginController',
     templateUrl: '/partials/login.html',
   });
-  $routeProvider.when('/', {
+  $routeProvider.when('/main', {
     controller : 'MainController',
     templateUrl: '/partials/main.html',
   });
@@ -34,3 +34,24 @@ JumperLQ.config(function($httpProvider) {
   $httpProvider.interceptors.push('myHttpInterceptor');
 });
 
+JumperLQ.run([function($rootScope) {
+    window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '151685772163089',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v2.12'
+    });
+
+    FB.AppEvents.logPageView();
+
+  };
+
+  (function(d, s, id){
+     var js, fjs = d.getElementsByTagName(s)[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement(s); js.id = id;
+     js.src = "https://connect.facebook.net/en_US/sdk.js";
+     fjs.parentNode.insertBefore(js, fjs);
+   }(document, 'script', 'facebook-jssdk'));
+}]);

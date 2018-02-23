@@ -1,41 +1,48 @@
 JumperLQ.controller('MainController', function($scope, $rootScope, $log, $http, $routeParams, $location, $route) {
 
-  FB.getLoginStatus(function(response) {
-    if response['status'] != 'connected' :
-      $location.path('/login')
-  });
-
-  $scope.getUser = function() {
+  $scope.getUserInfo = function() {
     postData = {
-      user_id: login_user.user_id,
+      user_id : $rootScope.user_id
     }
     config = { }
+    if (typeof $scope.login_user == "undefined") {
+	$scope.login_user = { }
+    }
 
-    $http.post('/rest/user/', postData, config
+    $http.post('/rest/user', postData, config
         ).success(function(data, status, headers, config) {
-          $rootScope.login_user.first_name = data['first_name']
-          $rootScope.login_user.token = data['token']
+          $scope.login_user.first_name = data['first_name']
+          $scope.login_user.email = data['email']
+          $scope.login_user.cover = data['cover']
         }).error(function(data, status, headers, config) {
         });
-  } 
+  }; 
 
   $scope.updateUserGroups = function() {
     postData = {
-      user_id: login_user.user_id,
-      token: login_user.token
+      user_id: $rootScope.user_id
     }
     config = { }
 
-    $http.post('/rest/group/', postData, config
-        ).success(function(data, status, headers, config) {
-          $rootScope.login_user['groups'] = data
-        }).error(function(data, status, headers, config) {
-          $rootScope.login_user['groups'] = []
-        });
-  }
+    if (typeof $scope.login_user == "undefined") {
+	$scope.login_user = { }
+    }
+    $scope.login_user.groups = [
+	{name: "Group1", cover: "", is_notify_sent: true},
+	{name: "Group2", cover: "", is_notify_sent: false},
+	{name: "Group3", cover: "", is_notify_sent: true}
+	]
 
-  $scope.getUser()
-  $scope.updateUserGroups()
+    //$http.post('/rest/group', postData, config
+    //    ).success(function(data, status, headers, config) {
+    //      $scope.login_user.groups = data
+    //    }).error(function(data, status, headers, config) {
+    //      $scope.login_user.groups = []
+    //    });
+  };
+
+  $scope.getUserInfo();
+  $scope.updateUserGroups();
 
 });
 

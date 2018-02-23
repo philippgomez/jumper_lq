@@ -3,6 +3,9 @@ api_version: 1
 threadsafe: true
 
 handlers:
+- url: /webhook
+  script: main.app
+
 - url: /rest/.*
   script: main.app
 

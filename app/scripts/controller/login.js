@@ -10,10 +10,9 @@ JumperLQ.controller('LoginController', function($scope, $rootScope, $log, $http,
 
         $http.post('/rest/fbconnect', postData, config
         ).success(function(data, status, headers, config) {
-          $scope.login_user.token = data['token']
-          $scope.login_user.first_name = data['first_name']
-          $rootScope.status = ""
-          $location.path("/")
+          $rootScope.user_id = data['user_id']
+	  $rootScope.status = ""
+          $location.path("/main")
         }).error(function(data, status, headers, config) {
         });
       });

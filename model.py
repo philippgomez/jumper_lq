@@ -17,6 +17,18 @@ def GetUser(user_id):
     user = User.query(User.id == user_id).get()
     return user
 
+def UpdateUser(user_id, first_name, cover, email, token):
+    user = User.query(User.id == user_id).get()
+    if user :
+        user.first_name = first_name
+        user.cover = cover
+        user.email = email
+        user.token = token
+        user.put()
+    else :
+        user = AddUser(user_id, first_name, cover, email, token)
+
+    return user
 
 class Group(ndb.Model):
     id = ndb.StringProperty()

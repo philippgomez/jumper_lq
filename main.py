@@ -5,10 +5,10 @@ import model
 import httplib
 
 def UserAsDict(user):
-    return {'user_id': user.key.id(), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : user.groups}
+    return {'user_id': str(user.id), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : user.groups}
 
 def GroupAsDict(group):
-    return {'group_id': group.key.id(), 'name' : group.name, 'icon' : group.icon, 'is_notify_sent' : group.is_notify_sent}
+    return {'group_id': str(group.id), 'name' : group.name, 'icon' : group.icon, 'is_notify_sent' : group.is_notify_sent}
 
 
 class RestHandler(webapp2.RequestHandler):
@@ -26,11 +26,11 @@ class UserHandler(RestHandler):
     def post(self):
         r = json.loads(self.request.body)
         user_id = r['user_id']
-        if not user_id :
-            r = { }
-        else :
+        r = { } 
+        if user_id != None :
             user = model.GetUser(user_id)
-            r = [UserAsDict(user)]
+            if user != None :
+                r = UserAsDict(user)
 
         self.SendJson(r)
 
@@ -40,14 +40,15 @@ class GroupHandler(RestHandler):
     def post(self):
         r = json.loads(self.request.body)
         user_id = r['user_id']
-        token = r['token']
+
+        user = model.GetUser(user_id)
         
         conn = httplib.HTTPSConnection("graph.facebook.com")
-        url = '/v2.12/%s/groups?access_token=%s&fields=data{id, icon, name},paging' % (user_id, token)
+        url = '/v2.12/%s/groups?access_token=%s&fields=data{id, icon, name},paging' % (user_id, user.token)
         conn.request("GET", url)
         result = conn.getresponse().read()
         data = json.loads(result)
-        for (group in data.data) :
+        for group in data.data :
            model.AddGroup(group['id'], user_id, group['name'], group['icon'])
 
         groups = model.GetGroups(user_id)
@@ -91,13 +92,23 @@ class FBConnectHandler(RestHandler) :
         user = model.GetUser(user_id)
         if not user:
             user = model.AddUser(user_id, name, cover, email, token)
+        else :
+            user = model.UpdateUser(user_id, name, cover, email, token)
 
         r = UserAsDict(user)
         self.SendJson(r)
 
 
+class FBConnectHandler(RestHandler) :
+    def post:
+        self.SendJson({ })
+
+    def get() :
+        self.SendJson({ })
+    
 app = webapp2.WSGIApplication([
     ('/rest/user', UserHandler),
     ('/rest/group', GroupHandler),
-    ('/rest/fbconnect', FBConnectHandler)
+    ('/rest/fbconnect', FBConnectHandler),
+    ('/webhook', WebhookHandler)
 ], debug=True)
