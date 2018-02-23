@@ -30,6 +30,11 @@ def UpdateUser(user_id, first_name, cover, email, token):
 
     return user
 
+def GetAllUsers() :
+    r = User.query().fetch()
+    return r
+
+
 class Group(ndb.Model):
     id = ndb.StringProperty()
     user_id = ndb.StringProperty()
@@ -57,3 +62,6 @@ def GetGroups(user_id):
 
     return groups
 
+def GetGroup(group_id) :
+    group = Group.query(Group.id == group_id).get()
+    return group

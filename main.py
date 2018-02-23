@@ -3,6 +3,7 @@ import json
 import webapp2
 import model
 import httplib
+from google.appengine.api import mail
 
 def UserAsDict(user):
     return {'user_id': str(user.id), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : user.groups}
@@ -114,10 +115,44 @@ class WebhookHandler(RestHandler) :
               r = challenge
 
         self.Send(r)
-    
+
+class GroupPollHandler(RestHandler) :
+    def post(self):
+        users = model.GetAllUsers()
+        for user in users :
+            for group_id in user.groups :
+                group = model.GetGroup(group_id)
+                if group['is_notify_send'] == True :
+                    notification = get_group_feed(group['id'], user['token'])
+                    send_notification(user, group, notification)
+
+def get_group_feed(group, token) :
+    conn = httplib.HTTPSConnection("graph.facebook.com")
+    if group['paging_next'] == "" :
+        url = '/%s/feed?access_token=%s' % (group['id'], token)
+    else :
+        url = group['paging_next']
+    conn.request("GET", url)
+    result = conn.getresponse().read()
+    data = json.loads(result)
+    if data['paging'] != None and len(data['data']) > 0 :
+        if data['paging']['next'] :
+            paging_next = data['paging']['next']
+            group['paging_next'] = paging_next[len("https://graph.facebook.com"):-1]
+            group.puts()
+
+    return json.dumps(data['data'])
+
+def send_notification(user, group, notification) :
+    mail.send_mail(sender='mkchaz@gmail.com',
+                   to=user['first_name'] + '<' + user['email'] + '>',
+                   subject='Notification: New item in ' + group['name'],
+                   body=notification)
+
 app = webapp2.WSGIApplication([
     ('/rest/user', UserHandler),
     ('/rest/group', GroupHandler),
     ('/rest/fbconnect', FBConnectHandler),
-    ('/webhook', WebhookHandler)
+    ('/webhook', WebhookHandler),
+    ('/task/grouppoll', GroupPollHandler)
 ], debug=True)
