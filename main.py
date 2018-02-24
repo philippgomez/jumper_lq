@@ -59,7 +59,9 @@ class GroupHandler(RestHandler):
             for group in data['data'] :
                model.AddGroup(group['id'], user_id, group['name'])
         else :
+            # remove deleted groups here
             model.UpdateGroups(user_id, data['data'])
+            # add new groups here
             for group in data['data'] :
                model.UpdateGroup(group['id'], user_id, group['name'])
 

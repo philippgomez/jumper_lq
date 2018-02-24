@@ -43,7 +43,7 @@ class Group(ndb.Model):
     paging_next = ndb.StringProperty()
 
 def AddGroup(group_id, user_id, name, is_notify_sent=True, paging_next=""):
-    group = Group.query(Group.id == group_id).get()
+    group = Group.query(ndb.AND(Group.id == group_id, Group.user_id == user_id)).get()
     if group == None :
         group = Group(id=group_id, user_id=user_id, name=name, is_notify_sent=is_notify_sent, paging_next=paging_next)
         group.put()
@@ -64,24 +64,16 @@ def GetGroups(user_id):
 
     return groups
 
-def GetGroup(group_id) :
-    group = Group.query(Group.id == group_id).get()
+def GetGroup(group_id, user_id) :
+    group = Group.query(ndb.AND(Group.id == group_id, Group.user_id == user_id)).get()
     return group
 
-def UpdateGroup(group_id, user_id, name, is_notify_sent=True, paging_next=""):
-    group = Group.query(Group.id == group_id).get()
-    if group != None :
-        group.user_id = user_id
-        group.name = name
-        group.is_notify_sent = is_notify_sent
-        group.paging_next = paging_next
-        group.put()
+def UpdateGroup(group_id, user_id, name):
+    group = Group.query(ndb.AND(Group.id == group_id, Group.user_id == user_id)).get()
+    if group == None :
+        # Add only new groups
+        group = AddGroup(group_id, user_id, name)
     
-        user = User.query(User.id == user_id).get()
-        if user != None :
-            user.groups.append(group.key)
-            user.put()
-
     return group
 
 def UpdateGroups(user_id, groups) :
@@ -96,6 +88,7 @@ def UpdateGroups(user_id, groups) :
                     break
 
             if not is_found :
+                user.groups.remove(group_key)
                 group_key.delete()
 
         user.put()
