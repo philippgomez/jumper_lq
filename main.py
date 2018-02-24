@@ -179,7 +179,7 @@ def get_group_feed(group, user, paging_next) :
     
     conn.request("GET", url)
     res = conn.getresponse()
-    if res != None :
+    if res != None and res.status == 200:
         result = res.read()
         data = json.loads(result)
         r = data['data']
@@ -188,6 +188,14 @@ def get_group_feed(group, user, paging_next) :
             if data['paging'].has_key('previous') :
                 paging_previous_url = data['paging']['previous']
                 paging_previous = paging_previous_url[len("https://graph.facebook.com"):-1]
+
+                # bug fix, auth_token is changed during cron grouppoll request, results to 4xx error
+                params = [keyvalue.split("=") for keyvalue in paging_previous.split("?")[1].split("&")]
+                params = dict((k,v) for k,v in params) 
+                params['access_token'] = user.token
+                params=['%s=%s' % (k, v) for (k,v) in params.items()]
+                params = "&".join(params)
+                paging_previous = "/%s/feed?%s" % (group.id, params)
             if data['paging'].has_key('next') :
                 paging_next_url = data['paging']['next']
                 paging_next = paging_next_url[len("https://graph.facebook.com"):-1]
