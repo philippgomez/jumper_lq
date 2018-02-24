@@ -6,10 +6,11 @@ import httplib
 from google.appengine.api import mail
 
 def UserAsDict(user):
-    return {'user_id': str(user.id), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : user.groups}
+    groups = [group_key.get().id for group_key in user.groups]
+    return {'user_id': str(user.id), 'cover' : user.cover, 'first_name': user.first_name, 'email': user.email, 'groups' : groups}
 
 def GroupAsDict(group):
-    return {'group_id': str(group.id), 'name' : group.name, 'is_notify_sent' : group.is_notify_sent}
+    return {'group_id': str(group.id), 'name' : group.name, 'is_notify_sent' : group.is_notify_sent, 'paging_next' : group.paging_next}
 
 
 class RestHandler(webapp2.RequestHandler):
@@ -52,8 +53,15 @@ class GroupHandler(RestHandler):
         conn.request("GET", url)
         result = conn.getresponse().read()
         data = json.loads(result)
-        for group in data['data'] :
-           model.AddGroup(group['id'], user_id, group['name'])
+        
+        groups = model.GetGroups(user_id)
+        if len(groups) == 0 :
+            for group in data['data'] :
+               model.AddGroup(group['id'], user_id, group['name'])
+        else :
+            model.UpdateGroups(user_id, data['data'])
+            for group in data['data'] :
+               model.UpdateGroup(group['id'], user_id, group['name'])
 
         groups = model.GetGroups(user_id)
         r = [GroupAsDict(group) for group in groups]
@@ -117,36 +125,53 @@ class WebhookHandler(RestHandler) :
         self.Send(r)
 
 class GroupPollHandler(RestHandler) :
-    def post(self):
+    def get(self):
+        r = { }
         users = model.GetAllUsers()
         for user in users :
-            for group_id in user.groups :
-                group = model.GetGroup(group_id)
-                if group['is_notify_send'] == True :
-                    notification = get_group_feed(group['id'], user['token'])
-                    send_notification(user, group, notification)
+            r[user.first_name] = { }
+            for group_key in user.groups :
+                group = group_key.get()
+                r[user.first_name][group.name] = { }
+                if group.is_notify_sent == True :
+                    notification = get_group_feed(group, user)
+                    r[user.first_name][group.name]['notification'] = notification
+                    if len(notification) > 0 :
+                        send_notification(user, group, json.dumps(notification))
 
-def get_group_feed(group, token) :
+        return self.SendJson(r)
+
+def get_group_feed(group, user) :
+    #r = {}
+    r = []
+
     conn = httplib.HTTPSConnection("graph.facebook.com")
-    if group['paging_next'] == "" :
-        url = '/%s/feed?access_token=%s' % (group['id'], token)
+    if group.paging_next != None and group.paging_next != "" :
+        url = group.paging_next
     else :
-        url = group['paging_next']
+        url = '/%s/feed?access_token=%s' % (group.id, user.token)
+    
+    #r['url'] = url
     conn.request("GET", url)
-    result = conn.getresponse().read()
-    data = json.loads(result)
-    if data['paging'] != None and len(data['data']) > 0 :
-        if data['paging']['next'] :
-            paging_next = data['paging']['next']
-            group['paging_next'] = paging_next[len("https://graph.facebook.com"):-1]
-            group.puts()
+    res = conn.getresponse()
+    if res != None :
+        result = res.read()
+        data = json.loads(result)
+        #r['data'] = data['data']
+        r = data['data']
 
-    return json.dumps(data['data'])
+        if len(data['data']) > 0 and data.has_key('paging') :
+            if data['paging'].has_key('next') :
+                paging_next = data['paging']['next']
+                group.paging_next = paging_next[len("https://graph.facebook.com"):-1]
+                group.put()
+
+    return r
 
 def send_notification(user, group, notification) :
     mail.send_mail(sender='mkchaz@gmail.com',
-                   to=user['first_name'] + '<' + user['email'] + '>',
-                   subject='Notification: New item in ' + group['name'],
+                   to=user.first_name + ' <' + user.email + '>',
+                   subject='Notification: New item(s) in ' + group.name + ' feed',
                    body=notification)
 
 app = webapp2.WSGIApplication([
@@ -154,5 +179,5 @@ app = webapp2.WSGIApplication([
     ('/rest/group', GroupHandler),
     ('/rest/fbconnect', FBConnectHandler),
     ('/webhook', WebhookHandler),
-    ('/task/grouppoll', GroupPollHandler)
+    ('/tasks/grouppoll', GroupPollHandler)
 ], debug=True)

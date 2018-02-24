@@ -1,0 +1,4 @@
+cron:
+- description: "poll group feeds"
+  url: /tasks/grouppoll
+  schedule: every 5 mins

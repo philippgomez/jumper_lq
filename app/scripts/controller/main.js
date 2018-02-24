@@ -27,11 +27,6 @@ JumperLQ.controller('MainController', function($scope, $rootScope, $log, $http, 
     if (typeof $scope.login_user == "undefined") {
 	$scope.login_user = { }
     }
-    $scope.login_user.groups = [
-	{name: "Group1", cover: "", is_notify_sent: true},
-	{name: "Group2", cover: "", is_notify_sent: false},
-	{name: "Group3", cover: "", is_notify_sent: true}
-	]
 
     $http.post('/rest/group', postData, config
         ).success(function(data, status, headers, config) {
