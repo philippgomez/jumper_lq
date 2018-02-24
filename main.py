@@ -134,20 +134,32 @@ class GroupPollHandler(RestHandler) :
                 group = group_key.get()
                 r[user.first_name][group.name] = { }
                 if group.is_notify_sent == True :
-                    notification = get_group_feed(group, user)
-                    r[user.first_name][group.name]['notification'] = notification
-                    if len(notification) > 0 :
-                        send_notification(user, group, json.dumps(notification))
+                    notifications = []
+                    is_first_req = True
+                    paging_next = group.paging_next
+                    notification, paging_previous, paging_next = get_group_feed(group, user, paging_next)
+                    while len(notification) > 0 :
+                        if is_first_req :
+                            is_first_req = False
+                            group.paging_next = paging_previous
+                            group.put()
+
+                        notifications += notification
+                        notification, paging_previous, paging_next = get_group_feed(group, user, paging_next)
+
+                    if len(notifications) > 0 : 
+                        send_notification(user, group, json.dumps(notifications, indent=4))
 
         return self.SendJson(r)
 
-def get_group_feed(group, user) :
+def get_group_feed(group, user, paging_next) :
     #r = {}
     r = []
+    paging_previous = None
 
     conn = httplib.HTTPSConnection("graph.facebook.com")
-    if group.paging_next != None and group.paging_next != "" :
-        url = group.paging_next
+    if paging_next != None and paging_next != "" :
+        url = paging_next
     else :
         url = '/%s/feed?access_token=%s' % (group.id, user.token)
     
@@ -161,12 +173,14 @@ def get_group_feed(group, user) :
         r = data['data']
 
         if len(data['data']) > 0 and data.has_key('paging') :
+            if data['paging'].has_key('previous') :
+                paging_previous_url = data['paging']['previous']
+                paging_previous = paging_previous_url[len("https://graph.facebook.com"):-1]
             if data['paging'].has_key('next') :
-                paging_next = data['paging']['next']
-                group.paging_next = paging_next[len("https://graph.facebook.com"):-1]
-                group.put()
+                paging_next_url = data['paging']['next']
+                paging_next = paging_next_url[len("https://graph.facebook.com"):-1]
 
-    return r
+    return r, paging_previous, paging_next
 
 def send_notification(user, group, notification) :
     mail.send_mail(sender='mkchaz@gmail.com',
