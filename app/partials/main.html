@@ -2,6 +2,7 @@
   <img ng-src="{{login_user.cover}}" width="100" height="100"></img>
   <p><strong>Hello, {{login_user.first_name}} !</strong></p>
   <p>&nbsp;</p>
+  <form ng-submit="saveUserGroups()">
   <table>
     <tr>
       <td><strong>Group</td>
@@ -10,11 +11,13 @@
     <tr ng-repeat='group in login_user.groups'>
       <td>{{group.name}}</td>
       <td>
-          <label class="switch">
-          <input disabled type="checkbox" ng-checked="{{group.is_notify_sent}}">
+	  <label class="switch">
+          <input type="checkbox" ng-model="login_user.groups[$index].is_notify_sent">
           <span class="slider round"></span>
           </label>
      </td>
     </tr>
   </table>
+  <input type="submit"></input>
+  </form>
 </div>

@@ -36,6 +36,20 @@ JumperLQ.controller('MainController', function($scope, $rootScope, $log, $http, 
         });
   };
 
+  $scope.saveUserGroups = function() {
+    postData = {
+      user_id: $rootScope.user_id,
+      groups: $scope.login_user.groups
+    }
+    config = { }
+
+    $http.put('/rest/group', postData, config
+        ).success(function(data, status, headers, config) {
+          $scope.login_user.groups = data
+        }).error(function(data, status, headers, config) {
+        });
+  }
+
   $scope.getUserInfo();
   $scope.updateUserGroups();
 

@@ -70,6 +70,24 @@ class GroupHandler(RestHandler):
 
         self.SendJson(r)
 
+    def put(self):
+        r = json.loads(self.request.body)
+        user_id = r['user_id']
+        data_groups = r['groups']
+
+        groups = model.GetGroups(user_id)
+        for group in groups :
+            for data_group in data_groups :
+                if data_group['group_id'] == group.id :
+                    group.is_notify_sent = data_group['is_notify_sent']
+                    group.put()
+                    break
+
+        groups = model.GetGroups(user_id)
+        r = [GroupAsDict(group) for group in groups]
+
+        self.SendJson(r)
+
 
 class FBConnectHandler(RestHandler) :
 
@@ -128,13 +146,10 @@ class WebhookHandler(RestHandler) :
 
 class GroupPollHandler(RestHandler) :
     def get(self):
-        r = { }
         users = model.GetAllUsers()
         for user in users :
-            r[user.first_name] = { }
             for group_key in user.groups :
                 group = group_key.get()
-                r[user.first_name][group.name] = { }
                 if group.is_notify_sent == True :
                     notifications = []
                     is_first_req = True
@@ -152,10 +167,7 @@ class GroupPollHandler(RestHandler) :
                     if len(notifications) > 0 : 
                         send_notification(user, group, json.dumps(notifications, indent=4))
 
-        return self.SendJson(r)
-
 def get_group_feed(group, user, paging_next) :
-    #r = {}
     r = []
     paging_previous = None
 
@@ -165,13 +177,11 @@ def get_group_feed(group, user, paging_next) :
     else :
         url = '/%s/feed?access_token=%s' % (group.id, user.token)
     
-    #r['url'] = url
     conn.request("GET", url)
     res = conn.getresponse()
     if res != None :
         result = res.read()
         data = json.loads(result)
-        #r['data'] = data['data']
         r = data['data']
 
         if len(data['data']) > 0 and data.has_key('paging') :
